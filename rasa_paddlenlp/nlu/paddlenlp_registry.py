@@ -1,4 +1,6 @@
 from paddlenlp.transformers import (
+    ErnieTokenizer,
+    ErnieModel,
     BertModel,
     BertTokenizer,
     XLNetModel,
@@ -25,6 +27,7 @@ from rasa.nlu.utils.hugging_face.transformers_pre_post_processors import (
 
 model_special_tokens_pre_processors = {
     "bert": bert_tokens_pre_processor,
+    "ernie": bert_tokens_pre_processor,
     "gpt": gpt_tokens_pre_processor,
     "gpt2": gpt_tokens_pre_processor,
     "xlnet": xlnet_tokens_pre_processor,
@@ -35,6 +38,7 @@ model_special_tokens_pre_processors = {
 
 model_tokens_cleaners = {
     "bert": bert_tokens_cleaner,
+    "ernie": bert_tokens_cleaner,
     "gpt": openaigpt_tokens_cleaner,
     "gpt2": gpt2_tokens_cleaner,
     "xlnet": xlnet_tokens_cleaner,
@@ -45,6 +49,7 @@ model_tokens_cleaners = {
 
 model_embeddings_post_processors = {
     "bert": bert_embeddings_post_processor,
+    "ernie": bert_embeddings_post_processor,
     "gpt": gpt_embeddings_post_processor,
     "gpt2": gpt_embeddings_post_processor,
     "xlnet": xlnet_embeddings_post_processor,
@@ -55,18 +60,21 @@ model_embeddings_post_processors = {
 
 model_class_dict = {
     "bert": BertModel,
+    "ernie": ErnieModel,
     "xlnet": XLNetModel,
     "roberta": RobertaModel,
 }
 
 model_tokenizer_dict = {
     "bert": BertTokenizer,
+    "ernie": ErnieTokenizer,
     "xlnet": XLNetTokenizer,
     "roberta": RobertaTokenizer,
 }
 
 model_weights_defaults = {
     "bert": "bert-wwm-ext-chinese",
+    "ernie": "ernie-3.0-base-zh",
     "xlnet": "chinese-xlnet-base",
     "roberta": "roberta-wwm-ext",
 }

@@ -36,11 +36,11 @@ class PaddleNLPTokenizer(Tokenizer):
         """Returns the component's default config."""
         return {
             # name of the language model to load.
-            "model_name": "bert",
+            "model_name": "ernie",
             # Pre-Trained weights to be loaded(string)
-            "model_weights": "bert-wwm-ext-chinese",
+            "model_weights": "ernie-3.0-base-zh",
             # Flag to check whether to split intents
-            "intent_tokenization_flag": False,
+            "intent_tokenization_flag": True,
             # Symbol on which intent should be split
             "intent_split_symbol": "_",
             # Regular expression to detect tokens
@@ -119,14 +119,15 @@ class PaddleNLPTokenizer(Tokenizer):
         text = message.get(attribute)
 
         # HACK: have to do this to get offset value
-        encoded_inputs = self.tokenizer.batch_encode([[text, text]], stride=1, return_token_type_ids=False, return_length=False, return_special_tokens_mask=True)
+        encoded_inputs = self.tokenizer.batch_encode([[text, text]], stride=1, return_token_type_ids=False, return_length=False,
+                                                     return_dict=False, return_special_tokens_mask=True, max_length=512)
 
         tokens = []
 
         e = encoded_inputs[0]
         tokenized = self.tokenizer.convert_ids_to_tokens(e['input_ids'])
         for i in range(1, len(tokenized)):
-            if e['special_tokens_mask'][i] == 1:
+            if e['special_tokens_mask'][0] == 1:
                 break
             token = Token(tokenized[i], e['offset_mapping'][i][0], e['offset_mapping'][i][1])
             tokens.append(token)
