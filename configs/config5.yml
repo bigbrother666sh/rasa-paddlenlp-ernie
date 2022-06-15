@@ -1,0 +1,30 @@
+recipe: default.v1
+language: zh
+
+pipeline:
+  - name: "rasa_paddlenlp.nlu.paddlenlp_tokenizer.PaddleNLPTokenizer"
+    model_name: ernie
+    model_weights: ernie-3.0-base-zh
+    # Flag to check whether to split intents
+    intent_tokenization_flag: True
+    # Symbol on which intent should be split
+    intent_split_symbol: "_"
+  - name: "rasa_paddlenlp.nlu.paddlenlp_featurizer.PaddleNLPFeaturizer"
+    model_name: ernie
+    model_weights: ernie-3.0-base-zh
+    use_word_boundaries: False
+  - name: "LexicalSyntacticFeaturizer"
+  - name: "CountVectorsFeaturizer"
+  - name: "CountVectorsFeaturizer"
+    analyzer: "char_wb"
+    min_ngram: 1
+    max_ngram: 7
+  - name: "DIETClassifier"
+    entity_recognition: False
+    epochs: 100
+    #evaluate_every_number_of_epochs: 20
+    #evaluate_on_number_of_examples: 10
+    #checkpoint_model: True
+  - name: "FallbackClassifier"
+    threshold: 0.5
+    ambiguity_threshold: 0.1
