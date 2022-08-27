@@ -1,3 +1,10 @@
+**【update】适配paddlenlp 2.3.7**
+
+paddlenlp2.3.7貌似修正了tokenizer的机制bug（同时这一版本也带来很多taskflow的新预训练模型），所以适配2.3.7不需要更改130行的i为1。（改了反而不能运行）
+但额外的两个入参还是需要的。
+
+不过实测下来2.3.7 gpu版本的显存消耗比2.3.3要高，现在8G显存已经无法支撑test nlu了……而cpu版本不知为何2.3.7效果不如2.3.3。同样的数据，前者f1只有0.5不到，后者可以达到0.6……
+
 # Rasa NLU Components using PaddleNLP
 
 [![](https://img.shields.io/pypi/v/rasa_paddlenlp.svg)](https://pypi.python.org/pypi/rasa_paddlenlp)
@@ -127,6 +134,8 @@ max_length=512
 ```
 
 然后Ernie3.0的返回跟bert不太一样，所以为了调起ernie3.0还需要更改130行为：
+
+**2.3.5 以后版本无需更改这里，改了不能调起**
 
 ```
 if e['special_tokens_mask'][0] == 1:

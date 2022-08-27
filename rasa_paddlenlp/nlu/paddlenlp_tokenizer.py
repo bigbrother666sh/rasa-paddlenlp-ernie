@@ -127,7 +127,7 @@ class PaddleNLPTokenizer(Tokenizer):
         e = encoded_inputs[0]
         tokenized = self.tokenizer.convert_ids_to_tokens(e['input_ids'])
         for i in range(1, len(tokenized)):
-            if e['special_tokens_mask'][0] == 1:
+            if e['special_tokens_mask'][i] == 1:
                 break
             token = Token(tokenized[i], e['offset_mapping'][i][0], e['offset_mapping'][i][1])
             tokens.append(token)

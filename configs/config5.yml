@@ -22,9 +22,9 @@ pipeline:
   - name: "DIETClassifier"
     entity_recognition: False
     epochs: 100
-    #evaluate_every_number_of_epochs: 20
-    #evaluate_on_number_of_examples: 10
-    #checkpoint_model: True
+    evaluate_every_number_of_epochs: 20
+    evaluate_on_number_of_examples: 12
+    checkpoint_model: True
   - name: "FallbackClassifier"
-    threshold: 0.5
-    ambiguity_threshold: 0.1
+    threshold: 0.4
+    ambiguity_threshold: 0.01
