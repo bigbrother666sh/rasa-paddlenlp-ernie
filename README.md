@@ -1,24 +1,3 @@
-**【update】适配paddlenlp 2.3.7**
-
-paddlenlp2.3.7貌似修正了tokenizer的机制bug（同时这一版本也带来很多taskflow的新预训练模型），所以适配2.3.7不需要更改130行的i为1。（改了反而不能运行）
-但额外的两个入参还是需要的。
-
-不过实测下来2.3.7 gpu版本的显存消耗比2.3.3要高，现在8G显存已经无法支撑test nlu了。需要打开限制tf无限占用显存
-
-`export TF_FORCE_GPU_ALLOW_GROWTH=true`
-
-另外效果上不知道为啥2.3.7比2.3.3要下降…… 结果如下：
-
-2.3.3 GPU F1：0.5
-
-2.3.7 GPU F1：0.4
-
-2.3。3 Cpu F1：0.58
-
-2.3.7 Cpu F1：0.38
-
-以上适配的是rasa3.2（不过貌似3.1和3.2对于搭配Ernie效果没啥区别，改善的是rasa自带的jieba）
-
 # Rasa NLU Components using PaddleNLP
 
 [![](https://img.shields.io/pypi/v/rasa_paddlenlp.svg)](https://pypi.python.org/pypi/rasa_paddlenlp)
@@ -58,13 +37,11 @@ pip install paddlenlp==2.3.4
 
 #### 4、配置config.yml，可以多配置几个，以便比较哪个效果最好，所有配置文件都扔到configs里面
 
-repo中提供三个configs示例，config为官方自带的jieba方案，config1为SimonLiang的bert方案（已兼容paddlenlp2.3)，config5为Ernie3.0-base-zh版本
-
-但是要注意：**config1和config5不能直接比较，因为程序会有不同**
+repo中config文件夹里面有最新示例
 
 #### 5、准备nlu训练数据文件，按格式要求，可以准备多份，扔到 data里面，训练时程序会自动合并，
 
-配置文件和训练文件不懂，看这里： [https://rasa.com/docs/rasa/nlu-training-data](https://rasa.com/docs/rasa/nlu-training-data)
+配置文件和训练文件不懂，[看这里](https://rasa.com/docs/rasa/nlu-training-data)
 
 #### 6、在.\中运行full-test，遴选出最优的config
 
@@ -151,19 +128,99 @@ max_length=512
 
 然后Ernie3.0的返回跟bert不太一样，所以为了调起ernie3.0还需要更改130行为：
 
-**2.3.5 以后版本无需更改这里，改了不能调起**
+**2.3.5 以后版本无需更改这里，改了不能调起，但是经过实测使用paddlenlp2.3.3以后版本，效果会明显下降！！！具体原因不知，强烈建议使用2.3.3**
 
 ```
 if e['special_tokens_mask'][0] == 1:
 ```
 
-**这里其实我不是很有把握是否妥当**，主要是我没有研究paddlenlp这部分代码，只是这里不把i改成0，哪怕是改成 i-1 也会报out of range，所以我怀疑Ernie3.0这里的返回值只有1个……
+## 2022.9.8update【关于config调优】
 
-但实测下来这样改是可以调起ernie3.0正常使用的，并且实测效果还好于jieba方案和bert方案……
+经过Simon Liang的指点，通过阅读[这篇文章](https://botfront.io/blog/better-intent-classification-and-entity-extraction-with-diet-classifier-pipeline-optimization)
+我对rasa的config配置有了更加深刻认识，然后又通过反复的实验比对，现在终于能够在自己项目的数据集上把F1做到0.6了~（最开始都只有0.4x）
 
-但是这一句改了，paddlenlp的bert就调不起来了，这也就是本项目没有办法直接同时比较bert和ernie3.0的原因
+所以本次更新主要记录一些config配置心得，同时更新了我目前在用的config文件供大家参考，不过需要说明的是：config是与数据高度相关的，也就是说基本上不同的数据，表现最好的config都不一样。
 
-具体见：https://github.com/senses-chat/rasa-paddlenlp/issues/3
+比如在我这里，transformer_layers和embedding_dimension的值设太高效果反而不会好，主要就是因为我目前的项目数据集意图数量才12个，整个数据也才区区300多条。但是如果你有120个意图，几千条数据的话，那么这两项，尤其是ed就应该调高很多……不过从测试出来的F1曲线来看，目前config文件夹下
+的两个config在30个意图分类以及1000条训练数据以内应该都是较优的，可以直接用，也欢迎大家不断分享性能更好的config！
+
+首先原示例中的
+```
+- name: "CountVectorsFeaturizer"
+ analyzer: "char_wb"
+ min_ngram: 1
+ max_ngram: 7
+```
+
+这一部分是需要去掉的，这一部分主要是用于英文文本，通过拆分出字母级的训练词表，从而使模型可以具有一定的抵抗拼写错误的能力，但因为Ernie是中文模型，所以完全用不上这一块，反而会干扰效果。
+
+**但是如果你是用jieba+RegexFeaturizer的话，这一部分还是要保留的，有比没有效果好，哪怕训练语料都是中文！！！**
+
+（不过话说，几个月试下来，无论怎么折腾，jieba+RegexFeaturizer的效果都不如Ernie，所以还是建议大家直接用Ernie。有兴趣的同学可以看result文件夹下我最初在5月份的时候对jieba、bert和Ernie的比较数据）
+
+如果你坚持使用jieba+RegexFeaturizer的话，那么你可以加上这句，也许效果会有提升，但是Ernie方案中加了这个效果是下降的
+
+```
+use_masked_language_model: True
+```
+
+回到我们的Ernie方案，主要是在DietClassifier中进行调优，增加如下两项：
+
+```
+embedding_dimension: 30
+transformers_layers: 4
+```
+
+默认这两个的值分别是20和2，经过反复试验，适当调高（相对于你的训练数据量）这两个值，会有明显改善。但也要针对具体情况。
+
+具体而言如果你用的是GPU的话，那么embedding_dimension不要调，transformers_layers可以调到4；但是如果你用的是CPU的话，那么embedding_dimension调到30，transformers_layers调到8。
+试验比对，再增加的话，效果是下降的。有趣的是，这两个参数不管怎么调在jieba+RegexFeaturizer方案中貌似都不起什么作用……
+
+分析下来，我个人认为这两个参数的选择要综合训练数据量相对于设备算力的情况。以我现在的训练数量（data文件夹下），只有12个意图分类和300多条训练数据，这个数据量的情况下GPU上可能只需要把transformers_layers调到4就可以了，但是CPU上就需要把transformers_layers调到8并且把embedding_dimension调到30。
+
+同时根据下面这个图
+
+<img alt="img" height="600" src="results/gpu_config_compare.jpg" width="600"/>
+
+可以看出，绿色线（gpu下config）还是有随着训练数据量增加而提高的空间的，个人估计30个意图、1000条训练数据内这个config应该都还是够用的……
+
+**所以各位如果数据量和意图类别不是很多的情况下，可以直接选择我这里提供的config，先用下面命令评估下**
+
+```shell
+rasa test nlu --nlu 新数据文件 --cross-validation
+```
+
+**如果test上的F1差不多0.6了，那么就可以用了，反之的话根据自己情况调整embedding_dimension和transformers_layers的值。**
+
+另外，试验下来，对于Ernie来说，如下两个还是要保留的，虽然按照道理说，其实Ernie也用不上这两块。但试验数据就是不管去掉哪个，或者一起拿掉，都会导致明显的下降
+```
+- name: "LexicalSyntacticFeaturizer"
+- name: "CountVectorsFeaturizer"
+```
+
+不过目前令我最不解的还是为什么这套方案搭配paddlenlp2.3.5（含）以上版本性能会大幅下降，按照道理说 `e['special_tokens_mask'][0] `这里应该是之前paddlenlp的漏洞啊，2.3.5补上了后居然效果还更加不好了……
+
+rasa的特点还是模型小，开销小，以我目前的intent数量其实根本不需要gpu，i5的cpu就足够了，除了对比训练比较慢外……
+
+另外说到训练，强烈建议大家在第一次训练时加上
+
+```
+tensorboard_log_directory: "./tensorboard"
+tensorboard_log_level: "epoch"
+```
+
+这两项，之后你可以通过tensorboard看出来最佳的训练epoch。但是使用这两项的时候记得把如下两项打开，这样可以综合比较测试集上的loss和accuracy，其实这个更加重要，训练集上都是0.9以上，其实没啥可看的
+
+```
+evaluate_every_number_of_epochs: 20
+evaluate_on_number_of_examples: 12
+```
+
+但是一旦你确定了最佳epoch的话，正式训练的时候就不要再加evaluate了，毕竟那会减少你的训练数据，除非你数据量很大。这个时候tensorboard开不开就随你了，开着可以最后看一眼是不是训练到位了。
+
+有关，tensorboard更加详细的介绍，[看这里](https://rasa.com/blog/tensorboard-in-rasa/)
+
+由于我只用rasa的nlu，所以我也只看scalars下面的i_acc和t_loss。
 
 ## Credits
 

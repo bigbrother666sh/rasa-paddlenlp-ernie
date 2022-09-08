@@ -15,16 +15,13 @@ pipeline:
     use_word_boundaries: False
   - name: "LexicalSyntacticFeaturizer"
   - name: "CountVectorsFeaturizer"
-  - name: "CountVectorsFeaturizer"
-    analyzer: "char_wb"
-    min_ngram: 1
-    max_ngram: 7
   - name: "DIETClassifier"
     entity_recognition: False
+    embedding_dimension: 30
+    transformers_layers: 8
     epochs: 100
-    evaluate_every_number_of_epochs: 20
-    evaluate_on_number_of_examples: 12
-    checkpoint_model: True
+    tensorboard_log_directory: ./tensorboard
+    tensorboard_log_level: epoch
   - name: "FallbackClassifier"
-    threshold: 0.4
-    ambiguity_threshold: 0.01
+    threshold: 0.58
+    ambiguity_threshold: 0.2
