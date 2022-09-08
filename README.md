@@ -192,7 +192,7 @@ rasa test nlu --nlu 新数据文件 --cross-validation
 
 **如果test上的F1差不多0.6了，那么就可以用了，反之的话根据自己情况调整embedding_dimension和transformers_layers的值。**
 
-另外，试验下来，对于Ernie来说，如下两个还是要保留的，虽然按照道理说，其实Ernie也用不上这两块。但试验数据就是不管去掉哪个，或者一起拿掉，都会导致明显的下降
+另外，试验下来，对于Ernie来说，如下两个还是要保留的，虽然按照道理说，其实Ernie也用不上这两块。但试验数据就是不管去掉哪个，或者一起拿掉，都会导致明显的下降（有兴趣可以看result里面的对比）
 ```
 - name: "LexicalSyntacticFeaturizer"
 - name: "CountVectorsFeaturizer"
