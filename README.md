@@ -18,7 +18,7 @@ pip install rasa
 #### 1、安装paddlenlp 2.3.4
 
 ```shell
-pip install paddlenlp==2.3.4
+pip install paddlenlp==2.3.3
 ```
 注：这一步之前需要安装PaddlePaddle，请自行查阅paddle官网，
 
